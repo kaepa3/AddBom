@@ -21,10 +21,13 @@ Loop:
 		select {
 		case v := <-path:
 			if extentionCheck(v) {
-				log.Println(v)
-				err := enc(v)
+				flg, err := checkBom(v)
 				if err != nil {
 					log.Println(err)
+					if flg {
+						log.Println(v)
+						err = enc(v)
+					}
 				}
 			}
 		case <-done:
@@ -83,10 +86,7 @@ func extentionCheck(file string) bool {
 	for _, v := range list {
 		ex := filepath.Ext(file)
 		if ex == v {
-			flg, err := checkBom(file)
-			if flg && err == nil {
-				return true
-			}
+			return true
 		}
 	}
 	return false
