@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func main() {
@@ -35,7 +34,6 @@ Loop:
 }
 
 func Read(file string) (string, error) {
-	log.Print("read")
 	// ShiftJISファイルを開く
 	sorceFile, err := os.Open(file)
 	if err != nil {
@@ -49,6 +47,9 @@ func Read(file string) (string, error) {
 	// ShiftJISのデコーダーを噛ませたReaderを作成する
 	return string(bytes), nil
 }
+
+var bom = []byte{0xEF, 0xBB, 0xBF}
+
 func Write(file, text string) error {
 	f, err := os.Create(file)
 	if err != nil {
@@ -56,14 +57,11 @@ func Write(file, text string) error {
 	}
 	defer f.Close()
 	// bom
-	val := []byte{0xEF, 0xBB, 0xBF}
-	size, err := f.Write(val)
+	_, err = f.Write(bom)
 	if err != nil {
 		return err
 	}
-	log.Println(size)
-	size, err = f.WriteString(text)
-	log.Println(size)
+	_, err = f.WriteString(text)
 	return err
 }
 
@@ -81,14 +79,37 @@ func enc(file string) error {
 }
 
 func extentionCheck(file string) bool {
-	list := []string{".cpp", ".hpp"}
+	list := []string{".cpp", ".hpp", ".cu"}
 	for _, v := range list {
-		if strings.Contains(file, v) {
-			return true
+		ex := filepath.Ext(file)
+		if ex == v {
+			flg, err := checkBom(file)
+			if flg && err == nil {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+func checkBom(file string) (bool, error) {
+	sorceFile, err := os.Open(file)
+	if err != nil {
+		return false, err
+	}
+	defer sorceFile.Close()
+	buf := make([]byte, 3)
+	n, err := sorceFile.Read(buf)
+	if n != 3 || err != nil {
+		return false, err
+	}
+	for i := range bom {
+		if buf[i] != bom[i] {
+			return false, nil
 		}
 	}
 
-	return false
+	return true, nil
 
 }
 
