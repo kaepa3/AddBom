@@ -22,12 +22,15 @@ Loop:
 		case v := <-path:
 			if extentionCheck(v) {
 				flg, err := checkBom(v)
-				if err != nil {
-					log.Println(err)
-					if flg {
+				if err == nil {
+					if !flg {
 						log.Println(v)
 						err = enc(v)
+					} else {
+						log.Println("bomming", v)
 					}
+				} else {
+					log.Println(v, err)
 				}
 			}
 		case <-done:
@@ -110,7 +113,6 @@ func checkBom(file string) (bool, error) {
 	}
 
 	return true, nil
-
 }
 
 func search(root string, done chan<- interface{}, path chan<- string, nest int) {
