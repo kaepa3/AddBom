@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io/ioutil"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -46,7 +46,7 @@ func Read(file string) (string, error) {
 		return "", err
 	}
 	defer sorceFile.Close()
-	bytes, err := ioutil.ReadAll(sorceFile)
+	bytes, err := io.ReadAll(sorceFile)
 	if err != nil {
 		return "", err
 	}
@@ -116,7 +116,7 @@ func checkBom(file string) (bool, error) {
 }
 
 func search(root string, done chan<- interface{}, path chan<- string, nest int) {
-	files, _ := ioutil.ReadDir(root)
+	files, _ := os.ReadDir(root)
 	for _, v := range files {
 		childPath := filepath.Join(root, v.Name())
 		if v.IsDir() {
